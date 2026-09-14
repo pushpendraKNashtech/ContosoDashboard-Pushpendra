@@ -1,3 +1,12 @@
+Working Screenshoots
+
+<img width="1916" height="937" alt="Screenshot 2026-09-15 000006" src="https://github.com/user-attachments/assets/c2a5b99f-bb06-417e-9e90-ba399ad165f9" />
+
+<img width="1914" height="962" alt="Screenshot 2026-09-15 000230" src="https://github.com/user-attachments/assets/7f108286-5fc8-4ce0-99bc-d4514e3b6aee" />
+
+<img width="1917" height="966" alt="Screenshot 2026-09-15 000243" src="https://github.com/user-attachments/assets/707ce383-6ce8-404e-b069-ed0bf2bb5220" />
+
+
 # ContosoDashboard
 
 The ContosoDashboard application is intended for TRAINING PURPOSES ONLY.
