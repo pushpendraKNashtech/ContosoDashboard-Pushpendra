@@ -18,6 +18,9 @@ public class DocumentDownloadModel : PageModel
         if (!int.TryParse(claim, out var userId)) return NotFound();
         var file = await _documents.OpenAuthorizedAsync(documentId, userId, cancellationToken);
         if (file == null) return NotFound();
-        return File(file.Content, file.ContentType, file.FileName);
+        var safeFileName = Path.GetFileName(file.FileName);
+        return download
+            ? File(file.Content, file.ContentType, safeFileName)
+            : File(file.Content, file.ContentType);
     }
 }

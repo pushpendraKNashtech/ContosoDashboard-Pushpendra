@@ -15,6 +15,7 @@ public interface IDocumentService
     Task<bool> ReplaceAsync(int documentId, Stream content, string originalFileName, string contentType, long size, int userId, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(int documentId, int userId, CancellationToken cancellationToken = default);
     Task<bool> ShareAsync(int documentId, int recipientUserId, int userId);
+    Task<bool> ShareWithDepartmentAsync(int documentId, string department, int userId);
     Task<bool> RevokeShareAsync(int documentId, int recipientUserId, int userId);
     Task<DocumentReport?> GetReportAsync(int userId);
 }
@@ -79,6 +80,28 @@ public sealed class DocumentService : IDocumentService
             _context.Documents.Add(document);
             _context.DocumentActivities.Add(new DocumentActivity { Document = document, UserId = userId, Action = "Upload", Details = "Document uploaded" });
             await _context.SaveChangesAsync(cancellationToken);
+            if (request.ProjectId.HasValue)
+            {
+                var project = await _context.Projects
+                    .Include(p => p.ProjectMembers)
+                    .SingleAsync(p => p.ProjectId == request.ProjectId.Value, cancellationToken);
+                var recipientIds = project.ProjectMembers.Select(member => member.UserId)
+                    .Append(project.ProjectManagerId)
+                    .Where(recipientId => recipientId != userId)
+                    .Distinct()
+                    .ToList();
+                foreach (var recipientId in recipientIds)
+                {
+                    await _notifications.CreateNotificationAsync(new Notification
+                    {
+                        UserId = recipientId,
+                        Title = "Document Added to Project",
+                        Message = $"A document was added to project {request.ProjectId.Value}: {document.Title}",
+                        Type = NotificationType.DocumentAddedToProject,
+                        Priority = NotificationPriority.Informational
+                    });
+                }
+            }
             return new(true, null, document);
         }
         catch (Exception ex)
@@ -170,6 +193,24 @@ public sealed class DocumentService : IDocumentService
         _context.DocumentActivities.Add(new DocumentActivity { DocumentId = documentId, UserId = userId, Action = "Share" });
         await _context.SaveChangesAsync();
         await _notifications.CreateNotificationAsync(new Notification { UserId = recipientUserId, Title = "Document Shared", Message = $"A document was shared with you: {document.Title}", Type = NotificationType.DocumentShared, Priority = NotificationPriority.Informational });
+        return true;
+    }
+
+    public async Task<bool> ShareWithDepartmentAsync(int documentId, string department, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(department)) return false;
+        var document = await GetAuthorizedAsync(documentId, userId);
+        if (document == null || (document.UploadedByUserId != userId && !await IsManagerAsync(document, userId))) return false;
+        var normalizedDepartment = department.Trim();
+        if (await _context.DocumentShares.AnyAsync(s => s.DocumentId == documentId && s.SharedWithDepartment == normalizedDepartment && s.IsActive)) return true;
+        _context.DocumentShares.Add(new DocumentShare { DocumentId = documentId, SharedWithDepartment = normalizedDepartment, SharedByUserId = userId });
+        _context.DocumentActivities.Add(new DocumentActivity { DocumentId = documentId, UserId = userId, Action = "Share" });
+        await _context.SaveChangesAsync();
+        var recipients = await _context.Users.Where(u => u.Department == normalizedDepartment && u.UserId != userId).Select(u => u.UserId).ToListAsync();
+        foreach (var recipientId in recipients)
+        {
+            await _notifications.CreateNotificationAsync(new Notification { UserId = recipientId, Title = "Document Shared", Message = $"A document was shared with your team: {document.Title}", Type = NotificationType.DocumentShared, Priority = NotificationPriority.Informational });
+        }
         return true;
     }
 

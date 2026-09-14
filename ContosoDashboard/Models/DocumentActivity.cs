@@ -7,7 +7,6 @@ public class DocumentActivity
 {
     [Key]
     public int DocumentActivityId { get; set; }
-    [Required]
     public int? DocumentId { get; set; }
     [Required]
     public int UserId { get; set; }

@@ -176,6 +176,16 @@ main {
     flex: 0 0 auto;
 }
 
+.document-workflow :is(button, a, input, select, textarea):focus-visible {
+    outline: 3px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+.document-workflow [role="status"],
+.document-workflow [role="alert"] {
+    min-height: 1.5rem;
+}
+
 @media (max-width: 640.98px) {
     .document-filter {
         padding-left: 0.75rem;
@@ -184,5 +194,9 @@ main {
     .table-responsive {
         border: 1px solid #dee2e6;
         border-radius: 0.25rem;
+    }
+
+    .document-workflow .btn {
+        margin-top: 0.25rem;
     }
 }

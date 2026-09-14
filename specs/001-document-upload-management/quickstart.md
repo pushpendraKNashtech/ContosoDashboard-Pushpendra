@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- .NET SDK compatible with the current `ContosoDashboard.csproj` target (`net10.0` at planning time).
+- .NET 10.0 SDK (10.0.401 verified against the `net10.0` project target).
 - SQL Server LocalDB.
 - A browser with JavaScript and file upload support.
 - PowerShell from the repository root.
@@ -78,10 +78,27 @@ The test suite should cover file validation, generated path safety, storage/data
 ## Accessibility and responsive checks
 
 - Every upload, search, filter, replacement, sharing, preview, download, and delete control has a visible or programmatic label.
-- Keyboard-only navigation can reach the file picker, metadata fields, actions, dialogs, and status messages in a logical order.
-- Upload success, validation failures, and permission failures are visible and announced through status text without relying on color alone.
-- Document tables remain usable at mobile widths and expose a caption or equivalent accessible name.
-- Empty, loading, and error states remain readable at desktop and mobile widths.
+- Keyboard-only navigation reaches the file picker, metadata fields, actions, dialogs, and status messages in a logical order, with a visible focus indicator.
+- Upload success, validation failures, and permission failures are announced with status text and do not rely on color alone.
+- Document tables remain usable at mobile widths with horizontal scrolling, and empty, loading, and error states remain readable.
+
+## Implementation review
+
+| Requirement | Review evidence |
+| --- | --- |
+| FR-001–FR-006 | Validation and upload/storage tests cover authenticated upload, required metadata, type/size, scanning, generated paths, and persisted metadata. |
+| FR-007–FR-010 | Document authorization, query, and endpoint tests cover owner, project, share, administrator, search/filter/sort, preview, and download. |
+| FR-011–FR-015 | Authorized query tests and `DocumentAccessEndpointTests` cover user scoping, 500-result bounds, search fields, safe attachments, and inline PDF/image responses. |
+| FR-016–FR-021 | Lifecycle/sharing tests cover metadata edits, replacement, deletion, manager authorization, direct/team sharing, revocation, Shared with Me, and notifications. |
+| FR-022–FR-024 | Task/project integration tests cover authorized attachments, project access, project-manager upload, dashboard documents, counts, and notifications. |
+| FR-025–FR-028 | Activity/report tests cover attributable lifecycle events, administrator reporting, offline interfaces, and service-layer authorization. |
+| FR-029–FR-030 | Document workflow pages and the accessibility checks above cover loading, feedback, semantic structure, labels, keyboard focus, and responsive tables. |
+| SC-001–SC-003 | Adoption, findability, and category-rate targets require representative usage measurement after deployment. |
+| SC-004 | Authorization and protected-file tests provide the repeatable security validation path. |
+| SC-005 | The 25 MB boundary is automated; representative upload-duration measurement remains a browser/network exercise. |
+| SC-006–SC-007 | Bounded, indexed list/search queries are covered by document query tests; two-second percentile measurement requires representative data. |
+| SC-008–SC-009 | Preview latency and first-upload usability require browser usability measurement. |
+| SC-010 | Lifecycle activity tests verify attributable audit records for the implemented lifecycle actions. |
 
 ## Clean-state recovery
 

@@ -10,7 +10,7 @@
 
 <PageTitle>Documents - ContosoDashboard</PageTitle>
 
-<div class="container-fluid">
+<div class="container-fluid document-workflow">
     <div class="d-flex justify-content-between align-items-center mb-4"><h1>Documents</h1><button class="btn btn-primary" @onclick="OpenUpload">Upload Documents</button></div>
     @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert @(error ? "alert-danger" : "alert-success")" role="status">@message</div> }
     @if (uploadOpen)

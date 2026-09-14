@@ -29,20 +29,57 @@ public class DocumentSharingTests
     }
 
     [Fact]
-    public async Task DuplicateShareIsIdempotentAndOwnerCanRevokeIt()
+    public async Task DuplicateDirectShareIsIdempotentAndOwnerCanRevokeIt()
     {
-        await using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        context.Users.AddRange(new User { UserId = 2, Email = "recipient@test", DisplayName = "Recipient", Role = UserRole.Employee }, new User { UserId = 4, Email = "owner@test", DisplayName = "Owner", Role = UserRole.Employee });
-        context.Documents.Add(new Document { DocumentId = 1, Title = "Shared", Category = "Other", OriginalFileName = "shared.txt", FilePath = "4/personal/shared.txt", FileType = "text/plain", FileSizeBytes = 10, UploadedByUserId = 4 });
-        await context.SaveChangesAsync();
-        var service = new DocumentService(context, new NullStorage(), new SafeScanner(), new CapturingNotifications(), NullLogger<DocumentService>.Instance);
+        await using var context = CreateContext();
+        var notifications = new CapturingNotifications();
+        var service = CreateService(context, notifications);
 
         Assert.True(await service.ShareAsync(1, 2, 4));
         Assert.True(await service.ShareAsync(1, 2, 4));
         Assert.Single(context.DocumentShares);
+        Assert.Single(notifications.Created);
         Assert.True(await service.RevokeShareAsync(1, 2, 4));
         Assert.False((await context.DocumentShares.SingleAsync()).IsActive);
     }
+
+    [Fact]
+    public async Task OwnerCanShareWithDepartmentAndDepartmentRecipientCanFindDocument()
+    {
+        await using var context = CreateContext();
+        var notifications = new CapturingNotifications();
+        var service = CreateService(context, notifications);
+
+        Assert.True(await service.ShareWithDepartmentAsync(1, "Engineering", 4));
+        Assert.Single(context.DocumentShares);
+        Assert.Single(notifications.Created);
+        Assert.Single(await service.SearchAsync(2, new DocumentQuery(null, null, null, null, null, SharedOnly: true)));
+    }
+
+    [Fact]
+    public async Task UnauthorizedUserCannotShareOrRevoke()
+    {
+        await using var context = CreateContext();
+        var service = CreateService(context, new CapturingNotifications());
+
+        Assert.False(await service.ShareAsync(1, 2, 3));
+        Assert.False(await service.RevokeShareAsync(1, 2, 3));
+        Assert.Empty(context.DocumentShares);
+    }
+
+    private static ApplicationDbContext CreateContext()
+    {
+        var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        context.Users.AddRange(
+            new User { UserId = 2, Email = "recipient@test", DisplayName = "Recipient", Department = "Engineering", Role = UserRole.Employee },
+            new User { UserId = 3, Email = "other@test", DisplayName = "Other", Department = "Sales", Role = UserRole.Employee },
+            new User { UserId = 4, Email = "owner@test", DisplayName = "Owner", Department = "Engineering", Role = UserRole.Employee });
+        context.Documents.Add(new Document { DocumentId = 1, Title = "Shared", Category = "Other", OriginalFileName = "shared.txt", FilePath = "4/personal/shared.txt", FileType = "text/plain", FileSizeBytes = 10, UploadedByUserId = 4 });
+        context.SaveChanges();
+        return context;
+    }
+
+    private static DocumentService CreateService(ApplicationDbContext context, CapturingNotifications notifications) => new(context, new NullStorage(), new SafeScanner(), notifications, NullLogger<DocumentService>.Instance);
 
     private sealed class NullStorage : IFileStorageService { public Task<string> SaveAsync(Stream content, int userId, int? projectId, string extension, CancellationToken cancellationToken = default) => Task.FromResult(string.Empty); public Task<Stream?> OpenReadAsync(string relativePath, CancellationToken cancellationToken = default) => Task.FromResult<Stream?>(null); public Task DeleteAsync(string relativePath, CancellationToken cancellationToken = default) => Task.CompletedTask; }
     private sealed class SafeScanner : IMalwareScanner { public Task<bool> IsSafeAsync(Stream content, CancellationToken cancellationToken = default) => Task.FromResult(true); }

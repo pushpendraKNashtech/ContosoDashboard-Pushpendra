@@ -59,7 +59,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated(); // For development - use migrations in production
+        // Existing training databases were created before migrations existed. EnsureCreated preserves
+        // that initialization path; the idempotent document migration then upgrades legacy schemas.
+        context.Database.EnsureCreated();
+        context.Database.Migrate();
     }
     catch (Exception ex)
     {

@@ -75,7 +75,7 @@ description: "Executable task list for Document Upload and Management"
 
 - [X] T024 [P] [US2] Test owner, project member, project manager, share recipient, administrator, and unauthorized query scopes in `ContosoDashboard.Tests/Authorization/DocumentAuthorizationTests.cs`
 - [X] T025 [P] [US2] Test title/category/date/project/file-size sorting and filtering plus bounded authorized search predicates in `ContosoDashboard.Tests/Services/DocumentQueryTests.cs`
-- [ ] T026 [P] [US2] Test authorized inline preview, attachment download, safe filenames, MIME types, denied access, and missing-document behavior in `ContosoDashboard.Tests/Integration/DocumentAccessEndpointTests.cs`
+- [X] T026 [P] [US2] Test authorized inline preview, attachment download, safe filenames, MIME types, denied access, and missing-document behavior in `ContosoDashboard.Tests/Integration/DocumentAccessEndpointTests.cs`
 
 ### Implementation for User Story 2
 
@@ -98,7 +98,7 @@ description: "Executable task list for Document Upload and Management"
 ### Tests for User Story 3
 
 - [X] T032 [P] [US3] Test metadata update, replacement validation, permanent deletion, and file cleanup in `ContosoDashboard.Tests/Services/DocumentLifecycleTests.cs`
-- [X] T033 [P] [US3] Test user shares, duplicate-share idempotency, revocation, and recipient notification in `ContosoDashboard.Tests/Services/DocumentSharingTests.cs`
+- [X] T033 [P] [US3] Test user/team shares, duplicate-share idempotency, revocation, recipient notification, and unauthorized sharing in `ContosoDashboard.Tests/Services/DocumentSharingTests.cs`
 
 ### Implementation for User Story 3
 
@@ -120,8 +120,8 @@ description: "Executable task list for Document Upload and Management"
 
 ### Tests for User Story 4
 
-- [ ] T039 [P] [US4] Test task visibility, task-project association validation, and authorized task document attachment in `ContosoDashboard.Tests/Integration/TaskDocumentIntegrationTests.cs`
-- [ ] T040 [P] [US4] Test project document access, project-manager upload permissions, recent five uploads, document count, and project notifications in `ContosoDashboard.Tests/Integration/ProjectDocumentIntegrationTests.cs`
+- [X] T039 [P] [US4] Test task visibility, task-project association validation, and authorized task document attachment in `ContosoDashboard.Tests/Integration/TaskDocumentIntegrationTests.cs`
+- [X] T040 [P] [US4] Test project document access, project-manager upload permissions, recent five uploads, document count, and project notifications in `ContosoDashboard.Tests/Integration/ProjectDocumentIntegrationTests.cs`
 
 ### Implementation for User Story 4
 
@@ -145,7 +145,7 @@ description: "Executable task list for Document Upload and Management"
 
 ### Tests for User Story 5
 
-- [ ] T048 [P] [US5] Test append-only activity records for every lifecycle action and exclusion of paths, secrets, and file contents in `ContosoDashboard.Tests/Services/DocumentActivityTests.cs`
+- [X] T048 [P] [US5] Test append-only activity records for every lifecycle action and exclusion of paths, secrets, and file contents in `ContosoDashboard.Tests/Services/DocumentActivityTests.cs`
 - [X] T049 [P] [US5] Test administrator-only report access and document type, uploader, and access-pattern aggregation in `ContosoDashboard.Tests/Authorization/DocumentReportAuthorizationTests.cs`
 
 ### Implementation for User Story 5
@@ -167,8 +167,8 @@ description: "Executable task list for Document Upload and Management"
 - [X] T055 [P] Add structured error logging that excludes file contents, secrets, and local paths in `ContosoDashboard/Services/DocumentService.cs`
 - [X] T056 Run the automated document test suite and application build validation from `ContosoDashboard.Tests/ContosoDashboard.Tests.csproj` and `ContosoDashboard/ContosoDashboard.csproj`
 - [ ] T057 Execute all manual quickstart scenarios and record results in `specs/001-document-upload-management/quickstart.md`
-- [ ] T058 Reconcile the `net10.0` project target with the README/package baseline and document the verified supported SDK in `ContosoDashboard/ContosoDashboard.csproj` and `README.md`
-- [ ] T059 Review implementation against every FR-001 through FR-030 and SC-001 through SC-010 in `specs/001-document-upload-management/spec.md`
+- [X] T058 Reconcile the `net10.0` project target with the README/package baseline and document the verified supported SDK in `ContosoDashboard/ContosoDashboard.csproj` and `README.md`
+- [X] T059 Review implementation against every FR-001 through FR-030 and SC-001 through SC-010 in `specs/001-document-upload-management/spec.md`
 
 ---
 
