@@ -1,0 +1,32 @@
+@page "/documents/{DocumentId:int}"
+@using ContosoDashboard.Models
+@using ContosoDashboard.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@attribute [Authorize]
+@inject IDocumentService DocumentService
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Document Details - ContosoDashboard</PageTitle>
+<div class="container-fluid">
+@if (document == null) { <p><em>Loading...</em></p> } else {
+    <div class="d-flex justify-content-between align-items-center mb-4"><h1>@document.Title</h1><a class="btn btn-outline-primary" href="/documents/file/@document.DocumentId">Open document</a></div>
+    @if (!string.IsNullOrEmpty(message)) { <div class="alert @(error ? "alert-danger" : "alert-success")" role="status">@message</div> }
+    <div class="card"><div class="card-body"><dl class="row"><dt class="col-sm-3">File</dt><dd class="col-sm-9">@document.OriginalFileName</dd><dt class="col-sm-3">Category</dt><dd class="col-sm-9">@document.Category</dd><dt class="col-sm-3">Description</dt><dd class="col-sm-9">@(document.Description ?? "None")</dd><dt class="col-sm-3">Tags</dt><dd class="col-sm-9">@(document.Tags ?? "None")</dd><dt class="col-sm-3">Uploaded</dt><dd class="col-sm-9">@document.UploadedDate.ToLocalTime().ToString("f")</dd></dl>
+    @if (document.UploadedByUserId == userId) { <EditForm Model="editModel" OnValidSubmit="Save"><DataAnnotationsValidator /><div class="mb-3"><label class="form-label" for="edit-title">Title</label><InputText id="edit-title" class="form-control" @bind-Value="editModel.Title" /></div><div class="mb-3"><label class="form-label" for="edit-description">Description</label><InputText id="edit-description" class="form-control" @bind-Value="editModel.Description" /></div><div class="mb-3"><label class="form-label" for="edit-category">Category</label><InputSelect id="edit-category" class="form-select" @bind-Value="editModel.Category">@foreach (var value in DocumentRules.Categories) { <option value="@value">@value</option> }</InputSelect></div><div class="mb-3"><label class="form-label" for="edit-tags">Tags</label><InputText id="edit-tags" class="form-control" @bind-Value="editModel.Tags" /></div><button class="btn btn-primary me-2" type="submit">Save changes</button><button class="btn btn-outline-danger" type="button" @onclick="Delete">Delete permanently</button></EditForm><div class="mt-3"><label class="form-label" for="replacement-file">Replace file</label><InputFile id="replacement-file" OnChange="SelectReplacement" /><button class="btn btn-outline-primary mt-2" type="button" disabled="@(replacement == null)" @onclick="Replace">Replace document</button></div><div class="input-group mt-3"><label class="visually-hidden" for="share-user">Share with</label><select id="share-user" class="form-select" @bind="recipientUserId"><option value="0">Select recipient</option>@foreach (var recipient in recipients) { <option value="@recipient.UserId">@recipient.DisplayName (@recipient.Department)</option> }</select><button class="btn btn-outline-secondary" type="button" disabled="@(recipientUserId == 0)" @onclick="Share">Share</button></div> }
+    </div></div>
+}
+</div>
+@code {
+    [Parameter] public int DocumentId { get; set; }
+    private Document? document; private List<User> recipients = []; private IBrowserFile? replacement; private int userId; private bool error; private string? message; private DocumentUploadRequest editModel = new("", null, DocumentRules.Categories[0], null, null, null);
+    protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); int.TryParse(state.User.FindFirstValue(ClaimTypes.NameIdentifier), out userId); document = await DocumentService.GetAuthorizedAsync(DocumentId, userId); recipients = await UserService.GetShareRecipientsAsync(userId); if (document == null) Navigation.NavigateTo("/documents"); else editModel = new(document.Title, document.Description, document.Category, document.Tags, document.ProjectId, document.TaskId); }
+    private int recipientUserId;
+    private async Task Save() { var saved = await DocumentService.UpdateMetadataAsync(DocumentId, editModel, userId); error = !saved; message = saved ? "Document updated." : "Document could not be updated."; document = await DocumentService.GetAuthorizedAsync(DocumentId, userId); }
+    private async Task Delete() { if (await DocumentService.DeleteAsync(DocumentId, userId)) Navigation.NavigateTo("/documents"); else { error = true; message = "Document could not be deleted."; } }
+    private async Task Share() { var shared = recipientUserId > 0 && await DocumentService.ShareAsync(DocumentId, recipientUserId, userId); error = !shared; message = shared ? "Document shared." : "Document could not be shared."; }
+    private void SelectReplacement(InputFileChangeEventArgs args) => replacement = args.File;
+    private async Task Replace() { if (replacement == null) return; using var input = replacement.OpenReadStream(DocumentRules.MaxFileSize); using var memory = new MemoryStream(); await input.CopyToAsync(memory); memory.Position = 0; var replaced = await DocumentService.ReplaceAsync(DocumentId, memory, replacement.Name, replacement.ContentType, replacement.Size, userId); error = !replaced; message = replaced ? "Document replaced." : "Document could not be replaced."; replacement = null; document = await DocumentService.GetAuthorizedAsync(DocumentId, userId); }
+}

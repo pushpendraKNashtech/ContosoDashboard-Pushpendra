@@ -13,6 +13,7 @@ public interface ITaskService
     Task<bool> UpdateTaskStatusAsync(int taskId, int requestingUserId, Models.TaskStatus status);
     Task<bool> AddTaskCommentAsync(int taskId, int userId, string comment);
     Task<List<TaskComment>> GetTaskCommentsAsync(int taskId, int requestingUserId);
+    Task<List<Document>> GetTaskDocumentsAsync(int taskId, int requestingUserId);
 }
 
 public class TaskService : ITaskService
@@ -207,6 +208,17 @@ public class TaskService : ITaskService
             .Include(c => c.User)
             .Where(c => c.TaskId == taskId)
             .OrderBy(c => c.CreatedDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<Document>> GetTaskDocumentsAsync(int taskId, int requestingUserId)
+    {
+        var task = await GetTaskByIdAsync(taskId, requestingUserId);
+        if (task == null) return [];
+        return await _context.Documents
+            .Include(d => d.Project)
+            .Where(d => d.TaskId == taskId)
+            .OrderByDescending(d => d.UploadedDate)
             .ToListAsync();
     }
 }

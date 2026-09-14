@@ -13,6 +13,7 @@ public interface IUserService
     Task<bool> UpdateAvailabilityStatusAsync(int userId, AvailabilityStatus status);
     Task<List<User>> GetTeamMembersAsync(int userId);
     Task<List<User>> GetAllUsersAsync();
+    Task<List<User>> GetShareRecipientsAsync(int requestingUserId);
 }
 
 public class UserService : IUserService
@@ -143,6 +144,14 @@ public class UserService : IUserService
     public async Task<List<User>> GetAllUsersAsync()
     {
         return await _context.Users
+            .OrderBy(u => u.DisplayName)
+            .ToListAsync();
+    }
+
+    public async Task<List<User>> GetShareRecipientsAsync(int requestingUserId)
+    {
+        return await _context.Users
+            .Where(u => u.UserId != requestingUserId)
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
     }

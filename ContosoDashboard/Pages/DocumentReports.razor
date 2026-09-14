@@ -1,0 +1,11 @@
+@page "/documents/reports"
+@using ContosoDashboard.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Administrator")]
+@inject IDocumentService DocumentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Document Reports - ContosoDashboard</PageTitle>
+<div class="container-fluid"><h1>Document Reports</h1>@if (report == null) { <p><em>Loading or access denied.</em></p> } else { <p>Total documents: <strong>@report.TotalDocuments</strong></p><h2 class="h5">File types</h2><ul>@foreach (var item in report.ByType) { <li>@item.Type: @item.Count</li> }</ul><h2 class="h5">Uploaders</h2><ul>@foreach (var item in report.ByUploader) { <li>@item.User: @item.Count</li> }</ul><h2 class="h5">Activity</h2><ul>@foreach (var item in report.ByAction) { <li>@item.Action: @item.Count</li> }</ul>}</div>
+@code { private DocumentReport? report; protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); int.TryParse(state.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId); report = await DocumentService.GetReportAsync(userId); } }

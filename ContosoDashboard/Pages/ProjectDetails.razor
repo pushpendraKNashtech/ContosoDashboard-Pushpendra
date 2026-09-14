@@ -3,8 +3,10 @@
 @using ContosoDashboard.Models
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Forms
 @attribute [Authorize]
 @inject IProjectService ProjectService
+@inject IDocumentService DocumentService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
@@ -114,7 +116,7 @@
                                     <tbody>
                                         @foreach (var task in project.Tasks.OrderBy(t => t.DueDate))
                                         {
-                                            <tr class="@(task.DueDate.HasValue && task.DueDate < DateTime.Today && task.Status != Models.TaskStatus.Completed ? "table-danger" : "")">">
+                                            <tr class="@(task.DueDate.HasValue && task.DueDate < DateTime.Today && task.Status != Models.TaskStatus.Completed ? "table-danger" : "")">
                                                 <td>
                                                     <strong>@task.Title</strong>
                                                     @if (!string.IsNullOrEmpty(task.Description))
@@ -149,6 +151,15 @@
                                 </table>
                             </div>
                         }
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header"><h5 class="mb-0">Project Documents</h5></div>
+                    <div class="card-body">
+                        @if (projectDocuments.Count == 0) { <p class="text-muted">No documents associated with this project.</p> }
+                        else { <ul class="list-group list-group-flush">@foreach (var document in projectDocuments) { <li class="list-group-item"><a href="/documents/@document.DocumentId">@document.Title</a><span class="text-muted ms-2">@document.Category</span></li> }</ul> }
+                        @if (project.ProjectManagerId == currentUserId) { <div class="mt-3"><label class="form-label" for="project-file">Upload project document</label><InputFile id="project-file" OnChange="SelectProjectFile" /><input class="form-control mt-2" placeholder="Document title" @bind="projectDocumentTitle" /><select class="form-select mt-2" @bind="projectDocumentCategory">@foreach (var value in DocumentRules.Categories) { <option value="@value">@value</option> }</select><button class="btn btn-primary mt-2" disabled="@(projectFile == null)" @onclick="UploadProjectDocument">Upload</button></div> }
                     </div>
                 </div>
             </div>
@@ -237,6 +248,10 @@
     public int ProjectId { get; set; }
 
     private Project? project;
+    private List<Document> projectDocuments = new();
+    private IBrowserFile? projectFile;
+    private string projectDocumentTitle = string.Empty;
+    private string projectDocumentCategory = DocumentRules.Categories[0];
     private int currentUserId = 0;
 
     protected override async Task OnInitializedAsync()
@@ -253,6 +268,8 @@
         if (currentUserId > 0)
         {
             project = await ProjectService.GetProjectByIdAsync(ProjectId, currentUserId);
+            if (project != null)
+                projectDocuments = await ProjectService.GetProjectDocumentsAsync(ProjectId, currentUserId);
         }
         
         if (project == null)
@@ -271,6 +288,20 @@
             ProjectStatus.Completed => "success",
             _ => "secondary"
         };
+    }
+
+    private void SelectProjectFile(InputFileChangeEventArgs args) => projectFile = args.File;
+
+    private async Task UploadProjectDocument()
+    {
+        if (projectFile == null) return;
+        using var input = projectFile.OpenReadStream(DocumentRules.MaxFileSize);
+        using var memory = new MemoryStream();
+        await input.CopyToAsync(memory);
+        memory.Position = 0;
+        await DocumentService.UploadAsync(memory, projectFile.Name, projectFile.ContentType, projectFile.Size, new DocumentUploadRequest(projectDocumentTitle, null, projectDocumentCategory, null, ProjectId, null), currentUserId);
+        projectFile = null;
+        projectDocuments = await ProjectService.GetProjectDocumentsAsync(ProjectId, currentUserId);
     }
 
     private string GetTaskStatusColor(Models.TaskStatus status)

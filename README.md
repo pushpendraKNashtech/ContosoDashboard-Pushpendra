@@ -81,9 +81,9 @@ ContosoDashboard is built using ASP.NET Core 8.0 with Blazor Server and provides
 
 ### 🔧 Technical Stack
 
-- **Framework**: ASP.NET Core 8.0
+- **Framework**: ASP.NET Core target currently configured as .NET 10.0 in `ContosoDashboard.csproj`
 - **UI**: Blazor Server
-- **Database**: SQL Server LocalDB with Entity Framework Core
+- **Database**: SQL Server LocalDB with Entity Framework Core 8 package references
 - **Authentication**: Cookie-based mock authentication for training (Azure AD/Microsoft Entra ID ready)
 - **Authorization**: Claims-based identity with role-based access control
 - **Styling**: Bootstrap 5.3 with Bootstrap Icons
